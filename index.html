@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MM Tours Chalo</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+  }
+
+  iframe {
+    width: 100%;
+    height: calc(100vh - 70px);
+    border: none;
+  }
+
+  #loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+
+
+<div id="loading">Loading content...</div>
+
+<iframe id="viewer" src=""></iframe>
+
+<script>
+// Your Apps Script Web App URL:
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxMHMZZFTFXBux3CE1t567yvOnub1u4HKdwcrofGE7wDH0SxxHKcGufYS4umSaYCIn/exec"; 
+
+async function loadIframe() {
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+
+    console.log("Fetched Data:", data);
+
+    document.getElementById("viewer").src = data.iframeUrl;
+    document.getElementById("loading").style.display = "none";
+
+  } catch (err) {
+    document.getElementById("loading").innerText = "Failed to load iframe URL.";
+    console.error(err);
+  }
+}
+
+loadIframe();
+</script>
+
+</body>
+</html>
