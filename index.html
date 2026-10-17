@@ -114,9 +114,15 @@ async function loadIframe() {
     // its own URL and opens the matching package popup automatically.
     const targetUrl = new URL(data.iframeUrl);
     const incomingParams = new URLSearchParams(window.location.search);
-    incomingParams.forEach((value, key) => {
-      targetUrl.searchParams.set(key, value);
-    });
+
+    // Forward all shared-link parameters to the actual MM Tours Chalo web app URL
+    // fetched from Sheet1!A2. In particular, ?packageId=WB1989 must reach doGet(e).
+    for (const [key, value] of incomingParams.entries()) {
+      if (key && value !== "") targetUrl.searchParams.set(key, value);
+    }
+
+    // Keep the hash too if a future shared link uses one (packageId normally uses query string).
+    if (window.location.hash) targetUrl.hash = window.location.hash;
 
     // Explicitly retain the Permissions Policy delegation before setting src.
     iframe.setAttribute('allow', 'web-share; clipboard-write');
