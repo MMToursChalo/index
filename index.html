@@ -109,27 +109,24 @@ async function loadIframe() {
       throw new Error('The response does not contain a valid iframeUrl.');
     }
 
+    // Forward shared-link parameters (especially packageId) into the Apps Script
+    // URL fetched from the Google Sheet. The embedded app reads packageId from
+    // its own URL and opens the matching package popup automatically.
+    const targetUrl = new URL(data.iframeUrl);
+    const incomingParams = new URLSearchParams(window.location.search);
+    incomingParams.forEach((value, key) => {
+      targetUrl.searchParams.set(key, value);
+    });
+
     // Explicitly retain the Permissions Policy delegation before setting src.
     iframe.setAttribute('allow', 'web-share; clipboard-write');
-
-    // If the visitor opened a shared GitHub URL such as
-    // https://mmtourschalo.github.io/index/?packageId=ABC123,
-    // forward that package ID into the embedded Apps Script URL so the app
-    // can find the package and automatically open its details popup.
-    const pageParams = new URLSearchParams(window.location.search);
-    const sharedPackageId = pageParams.get('packageId') || pageParams.get('packageid') || pageParams.get('tourId');
-    const appUrl = new URL(data.iframeUrl);
-    if (sharedPackageId) {
-      appUrl.searchParams.set('packageId', sharedPackageId);
-    }
-
     iframe.onload = function () {
       loading.style.display = 'none';
     };
     iframe.onerror = function () {
       showLoadError('Unable to load content. Please refresh and try again.');
     };
-    iframe.src = appUrl.toString();
+    iframe.src = targetUrl.toString();
   } catch (error) {
     console.error('MM Tours Chalo iframe loading error:', error);
     showLoadError('Failed to load content. Please refresh and try again.');
