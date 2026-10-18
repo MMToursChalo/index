@@ -4,141 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MM Tours Chalo</title>
-
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
-
-#loading {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-#viewer {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  display: block;
-  background: #fff;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #ddd;
-  border-top: 5px solid #1e88e5;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  font-size: 18px;
-  color: #333;
-  letter-spacing: 1px;
-  text-align: center;
-  padding: 0 20px;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;min-height:100%;overflow:hidden;font-family:Arial,sans-serif}
+#loading{position:fixed;inset:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999}
+#viewer{width:100%;height:100%;border:0;display:block;background:#fff}
+.spinner{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #1e88e5;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:18px;color:#333;letter-spacing:1px;text-align:center;padding:0 20px}
+#parentExitFallback{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:24px;background:#fff8f3;font-family:Arial,sans-serif;text-align:center;color:#35251e}
+#parentExitFallback.show{display:flex}
+#parentExitFallback section{max-width:360px;background:#fff;padding:28px;border-radius:20px;box-shadow:0 12px 45px #0002}
+#parentExitFallback h2{margin:0 0 10px}
+#parentExitFallback p{line-height:1.6;color:#75675f}
 </style>
 </head>
 <body>
-
-<div id="loading" role="status" aria-live="polite">
-  <div class="spinner"></div>
-  <div class="loading-text">Loading content...</div>
-</div>
-
-<!--
-  IMPORTANT: web-share permission is delegated to the embedded app here.
-  Keep this allow attribute even though src is assigned dynamically.
--->
-<iframe
-  id="viewer"
-  title="MM Tours Chalo"
-  allow="web-share; clipboard-write"
-  referrerpolicy="strict-origin-when-cross-origin">
-</iframe>
-
+<div id="loading" role="status" aria-live="polite"><div class="spinner"></div><div class="loading-text">Loading content...</div></div>
+<iframe id="viewer" title="MM Tours Chalo" allow="web-share; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<div id="parentExitFallback"><section><div style="font-size:38px;margin-bottom:12px">👋</div><h2>MM Tours Chalo</h2><p>You have chosen to exit. You can now close this browser tab.</p></section></div>
 <script>
 'use strict';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwxMHMZZFTFXBux3CE1t567yvOnub1u4HKdwcrofGE7wDH0SxxHKcGufYS4umSaYCIn/exec';
+const iframe=document.getElementById('viewer');
+const loading=document.getElementById('loading');
+const loadingText=document.querySelector('.loading-text');
+const parentExitFallback=document.getElementById('parentExitFallback');
+const initialHistoryLength=window.history.length;
+const appUrl=window.location.href;
+let appLoaded=false;
+let allowExitNavigation=false;
+let exitFallbackTimer=null;
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxMHMZZFTFXBux3CE1t567yvOnub1u4HKdwcrofGE7wDH0SxxHKcGufYS4umSaYCIn/exec';
-
-const iframe = document.getElementById('viewer');
-const loading = document.getElementById('loading');
-const loadingText = document.querySelector('.loading-text');
-
-function showLoadError(message) {
-  loadingText.textContent = message;
-  const spinner = document.querySelector('.spinner');
-  if (spinner) spinner.style.display = 'none';
+function showLoadError(message){loadingText.textContent=message;const spinner=document.querySelector('.spinner');if(spinner)spinner.style.display='none';}
+function installBackTrap(){try{history.pushState({mmToursParentBackTrap:true},'',appUrl);}catch(e){console.warn('Could not initialize back navigation trap',e);}}
+function handleBrowserBack(){
+  if(allowExitNavigation)return;
+  // Restore the GitHub URL (including packageId), then let the embedded app close its topmost popup.
+  installBackTrap();
+  if(appLoaded&&iframe.contentWindow){
+    iframe.contentWindow.postMessage({type:'MM_TOURS_BACK_REQUEST'},'*');
+  }else{
+    // If the app is still loading, offer the same safe exit fallback.
+    parentExitFallback.classList.add('show');
+  }
 }
-
-async function loadIframe() {
-  try {
-    const response = await fetch(SCRIPT_URL, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error('Could not retrieve the app URL (HTTP ' + response.status + ').');
-    }
-
-    const data = await response.json();
-    if (!data || typeof data.iframeUrl !== 'string' || !data.iframeUrl.trim()) {
-      throw new Error('The response does not contain a valid iframeUrl.');
-    }
-
-    // Forward shared-link parameters (especially packageId) into the Apps Script
-    // URL fetched from the Google Sheet. The embedded app reads packageId from
-    // its own URL and opens the matching package popup automatically.
-    const targetUrl = new URL(data.iframeUrl);
-    const incomingParams = new URLSearchParams(window.location.search);
-
-    // Forward all shared-link parameters to the actual MM Tours Chalo web app URL
-    // fetched from Sheet1!A2. In particular, ?packageId=WB1989 must reach doGet(e).
-    for (const [key, value] of incomingParams.entries()) {
-      if (key && value !== "") targetUrl.searchParams.set(key, value);
-    }
-
-    // Keep the hash too if a future shared link uses one (packageId normally uses query string).
-    if (window.location.hash) targetUrl.hash = window.location.hash;
-
-    // Explicitly retain the Permissions Policy delegation before setting src.
-    iframe.setAttribute('allow', 'web-share; clipboard-write');
-    iframe.onload = function () {
-      loading.style.display = 'none';
-    };
-    iframe.onerror = function () {
-      showLoadError('Unable to load content. Please refresh and try again.');
-    };
-    iframe.src = targetUrl.toString();
-  } catch (error) {
-    console.error('MM Tours Chalo iframe loading error:', error);
-    showLoadError('Failed to load content. Please refresh and try again.');
+function leavePage(){
+  if(allowExitNavigation)return;
+  allowExitNavigation=true;
+  parentExitFallback.classList.remove('show');
+  if(initialHistoryLength>1){
+    history.go(-2);
+    exitFallbackTimer=setTimeout(()=>parentExitFallback.classList.add('show'),700);
+  }else{
+    try{window.close();}catch(e){}
+    exitFallbackTimer=setTimeout(()=>parentExitFallback.classList.add('show'),300);
   }
 }
 
+// Add one history entry so Android/browser Back can be handled before leaving the app.
+installBackTrap();
+window.addEventListener('popstate',handleBrowserBack);
+window.addEventListener('message',event=>{
+  const msg=event.data;
+  if(!msg||typeof msg!=='object')return;
+  if(msg.type==='MM_TOURS_EXIT_CONFIRMED')leavePage();
+});
+
+async function loadIframe(){
+  try{
+    const response=await fetch(SCRIPT_URL,{cache:'no-store'});
+    if(!response.ok)throw new Error('Could not retrieve the app URL (HTTP '+response.status+').');
+    const data=await response.json();
+    if(!data||typeof data.iframeUrl!=='string'||!data.iframeUrl.trim())throw new Error('The response does not contain a valid iframeUrl.');
+    const targetUrl=new URL(data.iframeUrl);
+    const incomingParams=new URLSearchParams(window.location.search);
+    incomingParams.forEach((value,key)=>targetUrl.searchParams.set(key,value));
+    // Mark the embedded app so it delegates browser Back handling to this GitHub page.
+    targetUrl.searchParams.set('mmWrapper','1');
+    iframe.setAttribute('allow','web-share; clipboard-write');
+    iframe.onload=()=>{appLoaded=true;loading.style.display='none';};
+    iframe.onerror=()=>showLoadError('Unable to load content. Please refresh and try again.');
+    iframe.src=targetUrl.toString();
+  }catch(error){console.error('MM Tours Chalo iframe loading error:',error);showLoadError('Failed to load content. Please refresh and try again.');}
+}
 loadIframe();
 </script>
 </body>
