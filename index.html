@@ -1,94 +1,762 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f7f8fa">
 <title>MM Tours Chalo</title>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;min-height:100%;overflow:hidden;font-family:Arial,sans-serif}
-#loading{position:fixed;inset:0;width:100%;height:100%;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999}
-#viewer{width:100%;height:100%;border:0;display:block;background:#fff}
-.spinner{width:50px;height:50px;border:5px solid #ddd;border-top:5px solid #1e88e5;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{font-size:18px;color:#333;letter-spacing:1px;text-align:center;padding:0 20px}
-#parentExitFallback{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:24px;background:#fff8f3;font-family:Arial,sans-serif;text-align:center;color:#35251e}
-#parentExitFallback.show{display:flex}
-#parentExitFallback section{max-width:360px;background:#fff;padding:28px;border-radius:20px;box-shadow:0 12px 45px #0002}
-#parentExitFallback h2{margin:0 0 10px}
-#parentExitFallback p{line-height:1.6;color:#75675f}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: #f7f8fa;
+}
+
+/* =========================
+   FULL SCREEN SKELETON LOADER
+========================= */
+
+#loading {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f7f8fa;
+  transition: opacity 0.25s ease;
+}
+
+#loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.skeleton {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.85) 50%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.4s infinite;
+}
+
+@keyframes skeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Header */
+
+.skeleton-header {
+  width: 100%;
+  height: 62px;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.skeleton-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.skeleton-title {
+  width: 155px;
+  height: 17px;
+}
+
+.skeleton-icon {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  border-radius: 9px;
+}
+
+.skeleton-icon.second {
+  margin-left: 0;
+}
+
+/* Hero banner */
+
+.skeleton-hero {
+  width: 100%;
+  height: clamp(145px, 25vh, 240px);
+  margin-top: 18px;
+  border-radius: 18px;
+}
+
+/* Section title */
+
+.skeleton-heading {
+  width: 175px;
+  height: 21px;
+  margin-top: 24px;
+  margin-bottom: 15px;
+}
+
+/* Horizontal cards */
+
+.skeleton-row {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.skeleton-card {
+  flex: 0 0 210px;
+  min-width: 0;
+  padding: 10px;
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 120px;
+  border-radius: 11px;
+}
+
+.skeleton-line {
+  width: 85%;
+  height: 12px;
+  margin-top: 12px;
+}
+
+.skeleton-line.short {
+  width: 55%;
+  margin-top: 9px;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 34px;
+  margin-top: 14px;
+  border-radius: 8px;
+}
+
+/* Bottom loading message */
+
+.loading-text {
+  margin-top: auto;
+  padding: 20px 0 8px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.4px;
+}
+
+/* =========================
+   IFRAME
+========================= */
+
+#viewer {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  border: 0;
+  background: #fff;
+}
+
+/* =========================
+   ERROR MESSAGE
+========================= */
+
+#loadError {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f7f8fa;
+}
+
+#loadError.show {
+  display: flex;
+}
+
+.error-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 22px;
+  text-align: center;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.09);
+}
+
+.error-icon {
+  font-size: 42px;
+  margin-bottom: 14px;
+}
+
+.error-box h2 {
+  margin-bottom: 10px;
+  color: #252525;
+  font-size: 21px;
+}
+
+.error-box p {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.retry-button {
+  margin-top: 20px;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 9px;
+  background: #c15023;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* =========================
+   EXIT FALLBACK
+========================= */
+
+#parentExitFallback {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #fff8f3;
+  text-align: center;
+  color: #35251e;
+}
+
+#parentExitFallback.show {
+  display: flex;
+}
+
+#parentExitFallback section {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 12px 45px rgba(0,0,0,0.12);
+}
+
+#parentExitFallback h2 {
+  margin-bottom: 10px;
+  font-size: 22px;
+}
+
+#parentExitFallback p {
+  color: #75675f;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.exit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.exit-actions button {
+  flex: 1;
+  padding: 12px 10px;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#stayButton {
+  background: #f1f2f4;
+  color: #333;
+}
+
+#exitButton {
+  background: #c15023;
+  color: #fff;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+  #loading {
+    padding: 10px;
+  }
+
+  .skeleton-header {
+    height: 56px;
+    min-height: 56px;
+    padding: 0 10px;
+    gap: 9px;
+  }
+
+  .skeleton-logo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .skeleton-title {
+    width: 125px;
+    max-width: 40%;
+  }
+
+  .skeleton-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .skeleton-hero {
+    height: 175px;
+    margin-top: 14px;
+  }
+
+  .skeleton-heading {
+    margin-top: 21px;
+    margin-bottom: 13px;
+  }
+
+  .skeleton-row {
+    gap: 12px;
+  }
+
+  .skeleton-card {
+    flex-basis: 76%;
+    padding: 9px;
+  }
+
+  .skeleton-image {
+    height: 125px;
+  }
+
+  .loading-text {
+    padding-bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+
+  #loading {
+    transition: none;
+  }
+}
 </style>
 </head>
+
 <body>
-<div id="loading" role="status" aria-live="polite"><div class="spinner"></div><div class="loading-text">Loading content...</div></div>
-<iframe id="viewer" title="MM Tours Chalo" allow="web-share; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-<div id="parentExitFallback"><section><div style="font-size:38px;margin-bottom:12px">👋</div><h2>MM Tours Chalo</h2><p>You have chosen to exit. You can now close this browser tab.</p></section></div>
+
+<!-- =========================
+     SKELETON LOADER
+========================= -->
+
+<div id="loading" role="status" aria-live="polite">
+
+  <div class="skeleton-header">
+    <div class="skeleton skeleton-logo"></div>
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton skeleton-icon"></div>
+    <div class="skeleton skeleton-icon second"></div>
+  </div>
+
+  <div class="skeleton skeleton-hero"></div>
+
+  <div class="skeleton skeleton-heading"></div>
+
+  <div class="skeleton-row">
+
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+      <div class="skeleton skeleton-button"></div>
+    </div>
+
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+      <div class="skeleton skeleton-button"></div>
+    </div>
+
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+      <div class="skeleton skeleton-button"></div>
+    </div>
+
+  </div>
+
+  <div class="skeleton skeleton-heading"></div>
+
+  <div class="skeleton-row">
+
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+    </div>
+
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-image"></div>
+      <div class="skeleton skeleton-line"></div>
+      <div class="skeleton skeleton-line short"></div>
+    </div>
+
+  </div>
+
+  <div class="loading-text" id="loadingText">
+    Preparing your travel experience...
+  </div>
+
+</div>
+
+<!-- MAIN APP IFRAME -->
+
+<iframe
+  id="viewer"
+  title="MM Tours Chalo"
+  allow="web-share; clipboard-write"
+  referrerpolicy="strict-origin-when-cross-origin"
+></iframe>
+
+<!-- LOAD ERROR -->
+
+<div id="loadError" role="alert">
+  <div class="error-box">
+    <div class="error-icon">⚠️</div>
+    <h2>Unable to Load</h2>
+    <p id="errorMessage">
+      Unable to load MM Tours Chalo. Please try again.
+    </p>
+    <button class="retry-button" id="retryButton" type="button">
+      Try Again
+    </button>
+  </div>
+</div>
+
+<!-- EXIT FALLBACK -->
+
+<div id="parentExitFallback">
+  <section>
+    <div style="font-size:38px;margin-bottom:12px">👋</div>
+    <h2>MM Tours Chalo</h2>
+    <p>Do you want to exit MM Tours Chalo?</p>
+
+    <div class="exit-actions">
+      <button id="stayButton" type="button">No, Stay</button>
+      <button id="exitButton" type="button">Yes, Exit</button>
+    </div>
+  </section>
+</div>
+
 <script>
 'use strict';
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwxMHMZZFTFXBux3CE1t567yvOnub1u4HKdwcrofGE7wDH0SxxHKcGufYS4umSaYCIn/exec';
-const iframe=document.getElementById('viewer');
-const loading=document.getElementById('loading');
-const loadingText=document.querySelector('.loading-text');
-const parentExitFallback=document.getElementById('parentExitFallback');
-const initialHistoryLength=window.history.length;
-const appUrl=window.location.href;
-let appLoaded=false;
-let allowExitNavigation=false;
-let exitFallbackTimer=null;
 
-function showLoadError(message){loadingText.textContent=message;const spinner=document.querySelector('.spinner');if(spinner)spinner.style.display='none';}
-function installBackTrap(){try{history.pushState({mmToursParentBackTrap:true},'',appUrl);}catch(e){console.warn('Could not initialize back navigation trap',e);}}
-function handleBrowserBack(){
-  if(allowExitNavigation)return;
-  // Restore the GitHub URL (including packageId), then let the embedded app close its topmost popup.
+/* =========================
+   CONFIGURATION
+========================= */
+
+const SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbwxMHMZZFTFXBux3CE1t567yvOnub1u4HKdwcrofGE7wDH0SxxHKcGufYS4umSaYCIn/exec';
+
+const iframe = document.getElementById('viewer');
+const loading = document.getElementById('loading');
+const loadingText = document.getElementById('loadingText');
+const loadError = document.getElementById('loadError');
+const errorMessage = document.getElementById('errorMessage');
+const parentExitFallback =
+  document.getElementById('parentExitFallback');
+
+const initialHistoryLength = window.history.length;
+const appUrl = window.location.href;
+
+let appLoaded = false;
+let allowExitNavigation = false;
+let exitFallbackTimer = null;
+let loadRequestNumber = 0;
+
+/* =========================
+   LOADING AND ERROR HELPERS
+========================= */
+
+function showLoading(message) {
+  loadingText.textContent =
+    message || 'Preparing your travel experience...';
+
+  loading.classList.remove('hidden');
+  loading.style.display = 'flex';
+  loadError.classList.remove('show');
+}
+
+function hideLoading() {
+  loading.classList.add('hidden');
+
+  // Remove from layout after the opacity transition.
+  setTimeout(() => {
+    if (loading.classList.contains('hidden')) {
+      loading.style.display = 'none';
+    }
+  }, 300);
+}
+
+function showLoadError(message) {
+  loading.classList.add('hidden');
+  loading.style.display = 'none';
+
+  errorMessage.textContent = message;
+  loadError.classList.add('show');
+}
+
+/* =========================
+   BROWSER BACK HANDLING
+========================= */
+
+function installBackTrap() {
+  try {
+    history.pushState(
+      { mmToursParentBackTrap: true },
+      '',
+      appUrl
+    );
+  } catch (error) {
+    console.warn('Could not initialize back trap:', error);
+  }
+}
+
+function handleBrowserBack() {
+  if (allowExitNavigation) return;
+
+  // Keep the wrapper URL and its packageId query parameters.
   installBackTrap();
-  if(appLoaded&&iframe.contentWindow){
-    iframe.contentWindow.postMessage({type:'MM_TOURS_BACK_REQUEST'},'*');
-  }else{
-    // If the app is still loading, offer the same safe exit fallback.
+
+  if (appLoaded && iframe.contentWindow) {
+    // Ask the embedded app to close its topmost popup first.
+    iframe.contentWindow.postMessage(
+      { type: 'MM_TOURS_BACK_REQUEST' },
+      '*'
+    );
+  } else {
+    // App has not finished loading: offer an exit option.
     parentExitFallback.classList.add('show');
   }
 }
-function leavePage(){
-  if(allowExitNavigation)return;
-  allowExitNavigation=true;
+
+function leavePage() {
+  if (allowExitNavigation) return;
+
+  allowExitNavigation = true;
   parentExitFallback.classList.remove('show');
-  if(initialHistoryLength>1){
+
+  if (initialHistoryLength > 1) {
     history.go(-2);
-    exitFallbackTimer=setTimeout(()=>parentExitFallback.classList.add('show'),700);
-  }else{
-    try{window.close();}catch(e){}
-    exitFallbackTimer=setTimeout(()=>parentExitFallback.classList.add('show'),300);
+
+    exitFallbackTimer = setTimeout(() => {
+      parentExitFallback.classList.add('show');
+    }, 700);
+  } else {
+    try {
+      window.close();
+    } catch (error) {
+      console.warn('Browser prevented closing the tab.');
+    }
+
+    exitFallbackTimer = setTimeout(() => {
+      parentExitFallback.classList.add('show');
+    }, 300);
   }
 }
 
-// Add one history entry so Android/browser Back can be handled before leaving the app.
-installBackTrap();
-window.addEventListener('popstate',handleBrowserBack);
-window.addEventListener('message',event=>{
-  const msg=event.data;
-  if(!msg||typeof msg!=='object')return;
-  if(msg.type==='MM_TOURS_EXIT_CONFIRMED')leavePage();
+window.addEventListener('popstate', handleBrowserBack);
+
+window.addEventListener('message', event => {
+  // Only accept messages from the currently embedded app.
+  if (event.source !== iframe.contentWindow) return;
+
+  const msg = event.data;
+
+  if (!msg || typeof msg !== 'object') return;
+
+  if (msg.type === 'MM_TOURS_EXIT_CONFIRMED') {
+    leavePage();
+  }
+
+  /*
+   * Optional: the embedded app can send this message
+   * after its important content and data have finished loading.
+   */
+  if (msg.type === 'MM_TOURS_APP_READY') {
+    appLoaded = true;
+    hideLoading();
+  }
 });
 
-async function loadIframe(){
-  try{
-    const response=await fetch(SCRIPT_URL,{cache:'no-store'});
-    if(!response.ok)throw new Error('Could not retrieve the app URL (HTTP '+response.status+').');
-    const data=await response.json();
-    if(!data||typeof data.iframeUrl!=='string'||!data.iframeUrl.trim())throw new Error('The response does not contain a valid iframeUrl.');
-    const targetUrl=new URL(data.iframeUrl);
-    const incomingParams=new URLSearchParams(window.location.search);
-    incomingParams.forEach((value,key)=>targetUrl.searchParams.set(key,value));
-    // Mark the embedded app so it delegates browser Back handling to this GitHub page.
-    targetUrl.searchParams.set('mmWrapper','1');
-    iframe.setAttribute('allow','web-share; clipboard-write');
-    iframe.onload=()=>{appLoaded=true;loading.style.display='none';};
-    iframe.onerror=()=>showLoadError('Unable to load content. Please refresh and try again.');
-    iframe.src=targetUrl.toString();
-  }catch(error){console.error('MM Tours Chalo iframe loading error:',error);showLoadError('Failed to load content. Please refresh and try again.');}
+document.getElementById('stayButton').addEventListener('click', () => {
+  parentExitFallback.classList.remove('show');
+  installBackTrap();
+});
+
+document.getElementById('exitButton').addEventListener('click', leavePage);
+
+/* Install the initial Back trap. */
+installBackTrap();
+
+/* =========================
+   LOAD GITHUB IFRAME URL
+========================= */
+
+async function loadIframe() {
+  const thisRequest = ++loadRequestNumber;
+
+  appLoaded = false;
+  showLoading('Preparing your travel experience...');
+  parentExitFallback.classList.remove('show');
+
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        'Could not retrieve the app URL (HTTP ' +
+        response.status + ').'
+      );
+    }
+
+    const data = await response.json();
+
+    if (
+      !data ||
+      typeof data.iframeUrl !== 'string' ||
+      !data.iframeUrl.trim()
+    ) {
+      throw new Error(
+        'The response does not contain a valid iframeUrl.'
+      );
+    }
+
+    const targetUrl = new URL(data.iframeUrl);
+
+    // Preserve incoming query parameters, including packageId.
+    const incomingParams = new URLSearchParams(
+      window.location.search
+    );
+
+    incomingParams.forEach((value, key) => {
+      targetUrl.searchParams.set(key, value);
+    });
+
+    // Tell the embedded app that Back handling belongs to wrapper.
+    targetUrl.searchParams.set('mmWrapper', '1');
+
+    iframe.setAttribute(
+      'allow',
+      'web-share; clipboard-write'
+    );
+
+    iframe.onload = () => {
+      if (thisRequest !== loadRequestNumber) return;
+
+      /*
+       * Fallback: hide the skeleton on iframe load.
+       * If the app sends MM_TOURS_APP_READY first, the
+       * skeleton is already hidden and this is harmless.
+       */
+      appLoaded = true;
+      hideLoading();
+    };
+
+    iframe.onerror = () => {
+      if (thisRequest !== loadRequestNumber) return;
+
+      showLoadError(
+        'Unable to load content. Please refresh and try again.'
+      );
+    };
+
+    iframe.src = targetUrl.toString();
+
+  } catch (error) {
+    if (thisRequest !== loadRequestNumber) return;
+
+    console.error(
+      'MM Tours Chalo iframe loading error:',
+      error
+    );
+
+    showLoadError(
+      'Failed to load content. ' +
+      (error.message || 'Please try again.')
+    );
+  }
 }
+
+/* =========================
+   RETRY BUTTON
+========================= */
+
+document.getElementById('retryButton').addEventListener('click', () => {
+  loadIframe();
+});
+
+/* Start the app. */
 loadIframe();
 </script>
+
 </body>
 </html>
